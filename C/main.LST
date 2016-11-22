@@ -1,0 +1,464 @@
+C51 COMPILER V6.12  MAIN                                                                   05/17/2006 11:40:21 PAGE 1   
+
+
+C51 COMPILER V6.12, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE .\main.c DEBUG OBJECTEXTEND
+
+stmt level    source
+
+   1          //--------------------------------------
+   2          //µ¹¼ÆÊ±Ê±ÖÓCx51Ô´´úÂë
+   3          //BlueXIII May 2006
+   4          //--------------------------------------
+   5          
+   6          
+   7          
+   8          #include <Reg52.h>
+   9          #define u8 unsigned char		//ÎªÊéĞ´·½±ã,¶¨Òåu8ÎªÎŞ·ûºÅ×Ö·ûĞÍ
+  10          #define u16 unsigned int		//¶¨Òåu16ÎªÎŞ·ûºÅÕûĞÍ
+  11          
+  12          u8 table[11]={0xFC,0x0C,0xDA,0xF2,0x66,0xB6,0xBE,0xE0,0xFE,0xF6,0x00}	;		//ÓÃÀ´´æ´¢LEDÊıÂë¹ÜµÄÂë±í£¬0~9ÒÔ¼
+             -°¿Õ¸ñ
+  13          u8 time[10]={2,2,2,2,2,2,2,2,2,2};		//ÓÃÀ´´æ´¢Ê±¼äÃ¿Ò»Î»µÄÊı¾İ£¬ÆäÖĞtime[9]½ÏÌØ±ğ£¬ÓÉÓÚ24½øÖÆµÄĞ¡Ê±²»±ãÓÚµ
+             -¥¶À½øÎ»/½èÎ»£¬¹ÊÓÃÆä¼ÆÂ¼0~23µÄĞ¡Ê±Êı¾İ£¬ÔÙ½«¸öÎ»ºÍÊ®Î»×ª³öµ½time[4]ºÍtime[5]
+  14          u8 fixno[9]={0,0,0,0,0,0,0,0,0};
+  15          
+  16          u8 counter1=0;		//ÓÃÓÚT0µÄ¼ÆÊıÆ÷1
+  17          u8 counter2=0;		//ÓÃÓÚT0µÄÚ¦ÊıÆ÷2
+  18          bit flag1=0;		//±êÖ¾Î»,Ã¿500ms±ä»»Ò»´Î,ÓÃÓÚÔÚÉèÖÃÊ±²úÉúÉÁË¸µÄÊı×Ö
+  19          u8 flag2=0;		//±êÖ¾ÃÇ,ÓÃÓÚÅĞ¶Ïµ¹¼ÆÊ±Ä£Ê½»¹ÊÇÊ±ÖÓÄ£Ê½,0Ê±Îªµ¹¼ÆÊ±Ä£Ê½,1ÎªÊ±ÖÓÄ£Ê½£¬2ÎªÉèÖÃÄ£Ê½
+  20          u8 key=0;		//°´¼ü,0Ê±±íÊ¾ÎŞ°´¼ü,1ÎªSET¼ü°´ÏÂ,2ÎªSWITCH,3ÎªADD,4ÎªTIME/CLOCK,5ÎªFIX
+  21          u8 ledno=0;		//ÓÃÓÚÅĞ¶ÏÉèÖÃÄ£Ê½ÖĞ¹â±ê´¦ÓÚÄÄÒ»Î»
+  22          
+  23          u8 th0init=0xd8;
+  24          u8 tl0init=0xf0;
+  25          
+  26          sbit p10=P1^0;
+  27          sbit p11=P1^1;
+  28          sbit p12=P1^2;
+  29          sbit p13=P1^3;
+  30          sbit p14=P1^4;
+  31          sbit p27=P2^7;
+  32          sbit p26=P2^6;
+  33          
+  34          void timer0(void);		//¼ÆÊ±Æ÷ÖĞ¶Ï
+  35          void caltime(void);		//µ¹¼ÆÊ±Ä£Ê½ÖĞÓÃÓÚ¼ÆËãÊ±¼ä
+  36          void printled(void);		//´òÓ¡LED
+  37          void win(void);		//Ê±¼äµ½Ê±ÓÃÓÚÇì×£,´òÓ¡HAPPY²¢Ê¹·äÃùÆ÷·¢Éù
+  38          u8 getkey(void);		//È¡µÃ°´¼üÊäÈë
+  39          void settime(void);		//Ê±¼äÉèÖÃÄ£Ê½
+  40          void printset(void);		//ÓÃÓÚÊ±¼äÉèÖÃÄ£Ê½µÄ´òÓ¡Êä³ö
+  41          void clockinit(void);		//Ê±ÖÓÄ£Ê½µÄ³õÊ¼»¯
+  42          void clock(void);		//Ê±ÖÓÄ£Ê½
+  43          void fix(void);		//¹¤³ÌÄ£Ê½
+  44          void printfix(void);			//¹¤³ÌÄ£Ê½µÄ´òÓ¡Êä³ö
+  45          
+  46          void main(void)
+  47          {
+  48   1         	//u8 i;
+  49   1      		//for(i=0;i<=9;i++) table[i]='0'+i;table[10]='b';		//±£Áô£¬²âÊÔÊ±ÓÃ
+  50   1         	//for(i=0;i<=9;i++) time[i]=2;
+  51   1      
+  52   1      	TMOD=0x01;	//ÉèÖÃT0Îª·½Ê½1²¢×°Èë³õÖµ,Ê¹10msÖĞ¶ÏÒ»´Î
+  53   1      	TH0=0xd8;
+C51 COMPILER V6.12  MAIN                                                                   05/17/2006 11:40:21 PAGE 2   
+
+  54   1      	TL0=0xf0;
+  55   1      	
+  56   1      	EA=1;		//¿ªÖĞ¶Ï
+  57   1      	ET0=1;
+  58   1      	TR0=1;
+  59   1      
+  60   1      	SCON=0x00;		//ÉèÖÃ´®¿ÚÎª·½Ê½0
+  61   1      	
+  62   1      	settime();		//Éè³õÊ±
+  63   1      	
+  64   1      	while(1)
+  65   1      	{
+  66   2      		key=getkey();		//ÔÚÖ÷³ÌĞòÖĞÒ»Ö±¼ì²â°´¼ü
+  67   2      		if(key==1) settime();
+  68   2      		if(key==4) fix();
+  69   2      		if(key==5) {flag2=!flag2;}
+  70   2      	}
+  71   1      }
+  72          
+  73          void timer0(void) interrupt 1 using 1		//T0ÖĞ¶Ï·şÎñ³ÌĞò,Ê¹ÓÃ¼Ä´æÆ÷×é1
+  74          {
+  75   1      
+  76   1      	TH0=th0init;		//Èí¼şÖØ×°
+  77   1      	TL0=tl0init;
+  78   1      
+  79   1      	counter1++;
+  80   1      	counter2++;
+  81   1      	if(counter1==100)		//Ã¿1ÃëÏìÓ¦Ò»´Î
+  82   1      	{
+  83   2      	 	counter1=0;
+  84   2      	 	if(flag2==0) caltime();
+  85   2      		if(flag2==1) clock();
+  86   2      
+  87   2      	}
+  88   1      	if(counter2==50)		//Ã¿500ms flag1È¡·´,ÓÃÓÚ´òÓ¡ÉÁË¸µÄ×Ö·û
+  89   1      	{
+  90   2      		counter2=0;
+  91   2      		flag1=!flag1;
+  92   2      		if(flag2==2) printset();
+  93   2      		if(flag2==3) printfix();
+  94   2      	}
+  95   1      		
+  96   1      }	
+  97          
+  98          /*
+  99          ÓÃÓÚ¼ÆËãÊ±¼äµÄº¯Êı,time[0]~time[8]·Ö±ğÓÃÀ´´æ´¢Ã¿Ò»Î»µÄÊı¾İ,¿É¼õÉÙ¼ÆËãÁ¿,µ«Ğ¡Ê±±È½ÏÌØ±ğ,ÓÃtime[9]À´±íÊ¾,ÔÙÍ
+             -¨¹ı¼ÆËãµÃtime[4]ºÍtime[5]
+ 100          */
+ 101          void caltime(void)		
+ 102          {
+ 103   1      	if(time[0]>0) time[0]--;
+ 104   1       	else
+ 105   1       	{
+ 106   2       		time[0]=9;
+ 107   2        		if(time[1]>0) time[1]--;
+ 108   2        		else
+ 109   2        		{
+ 110   3      				time[1]=5;
+ 111   3         			if(time[2]>0) time[2]--;
+ 112   3         			else
+ 113   3         			{
+ 114   4         				time[2]=9;
+C51 COMPILER V6.12  MAIN                                                                   05/17/2006 11:40:21 PAGE 3   
+
+ 115   4          				if(time[3]>0) time[3]--;
+ 116   4          				else
+ 117   4          				{
+ 118   5          					time[3]=5;
+ 119   5           					if(time[9]>0) {time[9]--;time[4]=time[9]%10;time[5]=time[9]/10;}		//time[9]µÄÈ¡ÖµÔÚ0~23Ö®¼ä,ÓÉti
+             -me[9]¿É¼ÆËã³ötime[4]ºÍtime[5]
+ 120   5           					else
+ 121   5           					{
+ 122   6           						time[9]=23;time[4]=time[9]%10;time[5]=time[9]/10;
+ 123   6      							if(time[6]>0) time[6]--;
+ 124   6            						else
+ 125   6            						{
+ 126   7            							time[6]=9;
+ 127   7             							if(time[7]>0) time[7]--;
+ 128   7             							else
+ 129   7             							{
+ 130   8             								time[7]=9;
+ 131   8              							if(time[8]>0) time[8]--;
+ 132   8              							else win();		//µ±Ê±¼äµ½Ê±µ÷ÓÃwinº¯ÊıÇì×£
+ 133   8      		 					}
+ 134   7      						}
+ 135   6      	  				}
+ 136   5      	 			}
+ 137   4      			}
+ 138   3        		}
+ 139   2       	}
+ 140   1       printled();		//×îºó´òÓ¡³öÊ±¼ä
+ 141   1      }
+ 142          
+ 143          void printled(void)
+ 144          {
+ 145   1      	u8 i;
+ 146   1       	for(i=0;i<=8;i++)
+ 147   1       	{
+ 148   2       		p27=0;		//P2.7ÓÃÓÚËø´æ
+ 149   2      		TI=0;		//TIĞèÈí¼şÖÃ0
+ 150   2        		SBUF=table[time[i]];		//table[]µÄµÚiÎ»¶ÔÓ¦×ÅLEDÂëµÄiÏÔÊ¾
+ 151   2        		while(TI==0);		//µÈ´ıÊä³ö
+ 152   2      		p27=1;
+ 153   2      	}
+ 154   1      }
+ 155          
+ 156          
+ 157          void delay(void)		//ÑÓÊ±º¯Êı,ÓÃÓÚ·À¶¶
+ 158          {u16 i;
+ 159   1       for(i=0;i<500;i++){}
+ 160   1      }
+ 161          
+ 162          u8 getkey(void)
+ 163          {
+ 164   1      	if(p10==0) {delay();while(p10==0);return(1);}		//¼ÓÈëdelay()ÒÔ·À¶¶£¬Ì§ÆğÊ±·µ»Ø¼üÖµ
+ 165   1       	if(p11==0) {delay();while(p11==0);return(2);}
+ 166   1       	if(p12==0) {delay();while(p12==0);return(3);}
+ 167   1       	if(p13==0) {delay();while(p13==0);return(4);}
+ 168   1       	if(p14==0) {delay();while(p14==0);return(5);}
+ 169   1       	return(0);
+ 170   1      }
+ 171           
+ 172          
+ 173          /*
+ 174          Ê±¼äÉèÖÃº¯Êı,·´¶øÊÇ±È½Ï¸´ÔÓµÄÒ»¸ö²¿·Ö,µ±ÓÃSWITCH¼üÇĞ»»µ½Ä³Ò»Î»Ê±,ĞèÒªÊ¹ÕâÒ»Î»ÉÁË¸.ÇÒÆäÖĞtime[4]ºÍtime[5]µÄ
+             -ÉèÖÃ{¼´Ğ¡Ê±ÊıµÄ¸öÎ»ºÍÊ®Î»},¶¼Òª¹Ë¼°ÁíÒ»Î»,ÈçÊ®Î»Îª2Ê±,¸öÎ»×î¶àÖ»ÄÜÈ¡
+C51 COMPILER V6.12  MAIN                                                                   05/17/2006 11:40:21 PAGE 4   
+
+ 175          µ½3.
+ 176          */
+ 177          void settime(void)
+ 178          {
+ 179   1      	u8 tmp;
+ 180   1      	tmp=flag2;
+ 181   1      	flag2=2;
+ 182   1      	delay();
+ 183   1      	key=0;
+ 184   1      	ledno=0;		//SEC1Ä¬ÈÏÑ¡ÖĞ
+ 185   1      	while(1)
+ 186   1      	{
+ 187   2      	 	key=getkey();
+ 188   2      	 	if(key==1) {flag2=tmp;break;}		//ÈôÔÙ°´Ò»´ÎSET¼ü,Ôò·µ»Ø
+ 189   2      		if(key==2)		//°´SWITCH¼üÓÉÓÒÖÁ×óÑ­»·ÇĞ»»¹â±êÎ»
+ 190   2      		{	
+ 191   3      			if(ledno<8) ledno++;
+ 192   3      	   		else ledno=0;
+ 193   3      			//printset();
+ 194   3         		}
+ 195   2      	
+ 196   2      	 
+ 197   2      		if(key==3)		//°´ADD¼üÊ¹¹â±êËùÔÚÎ»µÄÖµ¼Ó1
+ 198   2      		{
+ 199   3      			
+ 200   3      		 	switch(ledno)
+ 201   3      		 	{
+ 202   4      		 		case 0:
+ 203   4      					if(time[0]<9) time[0]++;
+ 204   4      					else time[0]=0;
+ 205   4      					break;
+ 206   4      		  		case 1:
+ 207   4      					if(time[1]<5) time[1]++;
+ 208   4      					else time[1]=0;
+ 209   4      	 				break;
+ 210   4      		 		case 2:
+ 211   4      					if(time[2]<9) time[2]++;
+ 212   4      					else time[2]=0;
+ 213   4      					break;
+ 214   4      	 	   		case 3:
+ 215   4      					if(time[3]<5) time[3]++;
+ 216   4      					else time[3]=0;
+ 217   4      	 				break;
+ 218   4      				case 4:
+ 219   4      			   		if((time[5]==0)||(time[5]==1))
+ 220   4      					{
+ 221   5      						if(time[4]<9) time[4]++;
+ 222   5      						else time[4]=0;
+ 223   5      					}
+ 224   4      					if(time[5]==2)
+ 225   4      					{
+ 226   5      						if(time[4]<3) time[0]++;
+ 227   5      						else time[4]=0;
+ 228   5      					}
+ 229   4      					break;
+ 230   4      				case 5:
+ 231   4            					if(time[4]<=3)
+ 232   4      					{
+ 233   5      						if(time[5]<2) time[5]++;
+ 234   5      						else time[5]=0;
+ 235   5      					}
+ 236   4      					if(time[5]>3)
+C51 COMPILER V6.12  MAIN                                                                   05/17/2006 11:40:21 PAGE 5   
+
+ 237   4      					{
+ 238   5      						if(time[5]<1) time[5]++;
+ 239   5      						else time[5]=0;
+ 240   5      					}
+ 241   4       					break;
+ 242   4      		   		case 6:
+ 243   4      					if(time[6]<9) time[6]++;
+ 244   4      					else time[6]=0;
+ 245   4      					break;
+ 246   4      	  			case 7:
+ 247   4              	   			if(time[7]<9) time[7]++;
+ 248   4      					else time[7]=0;
+ 249   4      	 				break;
+ 250   4      		   		case 8:
+ 251   4      					if(time[8]<9) time[8]++;
+ 252   4      					else time[8]=0;
+ 253   4      					break;
+ 254   4      	   		}
+ 255   3      			//printset();
+ 256   3      		}
+ 257   2      	}
+ 258   1      }
+ 259          
+ 260          void printset(void)		//ÉèÖÃÄ£Ê½µÄÉÁË¸Êä³ö
+ 261          {	
+ 262   1      	u8 i;
+ 263   1      	for(i=0;i<=8;i++)
+ 264   1      	{
+ 265   2      		p27=0;
+ 266   2      		TI=0;
+ 267   2      		if((flag1==1)&&(ledno==i)) SBUF=table[10];		//µ±flag1Îª1ÇÒledno=iÊ±Õı³£Êä³ö¿Õ¸ñ
+ 268   2      		else SBUF=table[time[i]];		//·ñÔòÕı³£Êä³ö
+ 269   2      		while(TI==0);
+ 270   2      		p27=1;
+ 271   2      	}
+ 272   1      }
+ 273          
+ 274          
+ 275          void win(void)		//Çì×£º¯Êı
+ 276          {
+ 277   1      	u8 happy[9]={0x77,0xCF,0xCF,0xEF,0x6F,0x00,0x00,0x00,0x00};		//¶¨ÒåLEDÂëHAPPY	
+ 278   1      	u8 i,j;
+ 279   1      	while(1)
+ 280   1      	{
+ 281   2      		for(j=0;j<=500;j++){p26=!p26;for(j=0;j<=10;j++);}
+ 282   2      		for(j=0;j<=1000;j++) p26=0;		//·¢Éù
+ 283   2      		if(flag1==0)
+ 284   2      		for(i=0;i<=8;i++)
+ 285   2      		{
+ 286   3      			p27=0;
+ 287   3      			TI=0;
+ 288   3      			SBUF=happy[i];
+ 289   3      			while(TI==0);
+ 290   3      			p27=1;
+ 291   3      		}
+ 292   2      		else
+ 293   2      		for(i=0;i<=8;i++)
+ 294   2      		{
+ 295   3      			p27=0;
+ 296   3      			TI=0;
+ 297   3      			SBUF=happy[8];
+ 298   3      			while(TI==0);
+C51 COMPILER V6.12  MAIN                                                                   05/17/2006 11:40:21 PAGE 6   
+
+ 299   3      			p27=1;
+ 300   3      		}
+ 301   2      	}
+ 302   1      }
+ 303          
+ 304          void clockinit(void)		//Ê±ÖÓ³ÌĞòµÄ³õÊ¼»¯,×î×ó±ßÁ½Î»ÎŞÓÃÍ¾,ÓÒ±ß6Î»ÏÔÊ¾Ê±¼ä,µÚ7Î»ÏÔÊ¾ĞÇÆÚÊı
+ 305          {
+ 306   1      	time[7]=0;
+ 307   1      	time[8]=0;
+ 308   1      	if((time[6]=0)||(time[6]=8)||(time[6]=9)) time[6]=1;
+ 309   1      }
+ 310          
+ 311          void clock(void)		//Ê±ÖÓ×Ó³ÌĞò,Óëµ¹¼ÆÊ±Ëã·¨ÀàËÆ
+ 312          {
+ 313   1      	clockinit();
+ 314   1      	if(time[0]<9) time[0]++;
+ 315   1      	else
+ 316   1       	{
+ 317   2      		time[0]=0;
+ 318   2        		if(time[1]<5) time[1]++;
+ 319   2        		else
+ 320   2        		{
+ 321   3      			time[1]=0;
+ 322   3         			if(time[2]<9) time[2]++;
+ 323   3         			else
+ 324   3         			{
+ 325   4      				time[2]=0;
+ 326   4          				if(time[3]<5) time[3]++;
+ 327   4          				else
+ 328   4          				{
+ 329   5      					time[3]=0;
+ 330   5           					if(time[9]<23) {time[9]++;time[4]=time[9]%10;time[5]=time[9]/10;}
+ 331   5           					else
+ 332   5           					{
+ 333   6      						time[9]=0;time[4]=time[9]%10;time[5]=time[9]/10;
+ 334   6            						if(time[6]<7) time[6]++;
+ 335   6            						else time[6]=1;
+ 336   6            
+ 337   6      					}
+ 338   5      	  			}
+ 339   4      	 		}
+ 340   3      		}
+ 341   2        	}
+ 342   1      
+ 343   1      	printled();
+ 344   1      }
+ 345          
+ 346          
+ 347          
+ 348          void fix(void)		//ĞŞÕı×Ó³ÌĞò,ÊäÈëµÄÖµÔ½´ó,¼ÆÊ±Ô½¿ì,×î´ó9999
+ 349          {
+ 350   1      	
+ 351   1      	u16 total=0;
+ 352   1      	u16 tmp1;
+ 353   1      	u16 tmp2;
+ 354   1      	
+ 355   1      	u8 tmp;
+ 356   1      	tmp=flag2;
+ 357   1      	flag2=3;
+ 358   1      
+ 359   1      	delay();
+ 360   1      	key=0;
+C51 COMPILER V6.12  MAIN                                                                   05/17/2006 11:40:21 PAGE 7   
+
+ 361   1      	ledno=0;
+ 362   1      	while(1)
+ 363   1      	{
+ 364   2      	 	key=getkey();
+ 365   2      	 	if(key==1) {flag2=tmp;break;}		//SET¼üÏàµ±ÓÚÈ¡Ïû
+ 366   2      		if(key==2)
+ 367   2      		{	
+ 368   3      			if(ledno<3) ledno++;
+ 369   3      	   	else ledno=0;
+ 370   3      			//printfix();
+ 371   3         	}
+ 372   2      	
+ 373   2      	 
+ 374   2      		if(key==3)
+ 375   2      		{
+ 376   3      		 	switch(ledno)
+ 377   3      		 	{
+ 378   4      		 		case 0:
+ 379   4      					if(fixno[0]<9) fixno[0]++;
+ 380   4      					else fixno[0]=0;
+ 381   4      					break;
+ 382   4      		  		case 1:
+ 383   4       	    			if(fixno[1]<9) fixno[1]++;
+ 384   4      					else fixno[1]=0;
+ 385   4      	 				break;
+ 386   4      		 		case 2:
+ 387   4      					if(fixno[2]<9) fixno[2]++;
+ 388   4      					else fixno[2]=0;
+ 389   4      					break;
+ 390   4      	 	   		case 3:
+ 391   4             					if(fixno[3]<9) fixno[3]++;
+ 392   4      					else fixno[3]=0;
+ 393   4      	 				break;
+ 394   4      			}
+ 395   3      			//printfix();
+ 396   3      		}
+ 397   2      		if(key==4)
+ 398   2      		{
+ 399   3      	 		total=fixno[0]+10*fixno[1]+100*fixno[2]+1000*fixno[3]+50000;
+ 400   3      	 		tmp1=total/256;
+ 401   3      	 		tmp2=total%256;
+ 402   3      	 		th0init=tmp1;
+ 403   3      	 		tl0init=tmp2;
+ 404   3      			flag2=tmp;
+ 405   3      			break;
+ 406   3      		}
+ 407   2      	}
+ 408   1      }
+ 409          
+ 410          void printfix(void)		//ÉèÖÃÄ£Ê½µÄÉÁË¸Êä³ö
+ 411          {	
+ 412   1      	u8 i;
+ 413   1      	for(i=0;i<=8;i++)
+ 414   1      	{
+ 415   2      		p27=0;
+ 416   2      		TI=0;
+ 417   2      		if((flag1==1)&&(ledno==i)) SBUF=table[10];		//µ±flag1Îª1ÇÒledno=iÊ±Õı³£Êä³ö¿Õ¸ñ
+ 418   2      		else SBUF=table[fixno[i]];		//·ñÔòÕı³£Êä³ö
+ 419   2      		while(TI==0);
+ 420   2      		p27=1;
+ 421   2      	}
+ 422   1      }
+C51 COMPILER V6.12  MAIN                                                                   05/17/2006 11:40:21 PAGE 8   
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1244    ----
+   CONSTANT SIZE    =      9    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     37      12
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
